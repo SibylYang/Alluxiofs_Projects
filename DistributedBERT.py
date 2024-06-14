@@ -10,7 +10,7 @@ import torch.optim as optim
 # from torchsummary import summary
 from tqdm import tqdm
 import fsspec
-from alluxiofs import AlluxioFileSystem
+from alluxiofs import AlluxioFileSystem, AlluxioClient
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
@@ -181,9 +181,13 @@ def ddp_setup(rank, world_size):
     torch.cuda.set_device(rank)
 
 def main(rank, world_size, total_epochs, batch_size, directory_path):
-    # set up alluxio filesystem TODO: submit load in code
+    # set up alluxio filesystem and load files in directory into Alluxio cache
     fsspec.register_implementation("alluxiofs", AlluxioFileSystem, clobber=True)
     alluxio_fs = fsspec.filesystem("alluxiofs", etcd_hosts="localhost", etcd_port=2379, target_protocol="s3")
+
+    alluxio_client = AlluxioClient(etcd_hosts="localhost")
+    load_success = alluxio_client.submit_load(directory_path)
+    print('Alluxio Load successful:', load_success)
 
     # distributed training settings
     print(f"Initializing process group for rank {rank}")

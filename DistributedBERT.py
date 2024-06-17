@@ -258,17 +258,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # initialize AlluxioClient to pull all file from S3 to alluxio
-    # alluxio_client = AlluxioClient(etcd_hosts="localhost")
-    # load_success = alluxio_client.submit_load(args.directory_path)
-    # print('Alluxio Load job submitted successful:', load_success)
-    #
-    # load_progress = "Loading datasets into Alluxio"
-    #
-    # while load_progress != "SUCCEEDED":
-    #     time.sleep(5)
-    #     progress = alluxio_client.load_progress('s3://sibyltest/BERT_test/')
-    #     load_progress = progress[1]['jobState']
-    #     print('Load progress:', load_progress)
+    alluxio_client = AlluxioClient(etcd_hosts="localhost")
+    load_success = alluxio_client.submit_load(args.directory_path)
+    print('Alluxio Load job submitted successful:', load_success)
+
+    load_progress = "Loading datasets into Alluxio"
+
+    while load_progress != "SUCCEEDED":
+        time.sleep(5)
+        progress = alluxio_client.load_progress('s3://sibyltest/BERT_test/')
+        load_progress = progress[1]['jobState']
+        print('Load progress:', load_progress)
 
     world_size = torch.cuda.device_count() if torch.cuda.is_available() else os.cpu_count()
     mp.spawn(main, args=(world_size, args.total_epochs, args.batch_size, args.directory_path), nprocs=world_size,
